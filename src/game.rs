@@ -53,9 +53,11 @@ impl Game {
         let p: &piece::Pieces = self.play_piece.as_ref().unwrap();
         for i in 0..grid::BOARD_HEIGHT-1 {
             for j in 1..grid::BOARD_WIDTH-1 {
+                // add moving block to the board
                 if j >= p.pos.0 && j < p.pos.0 + p.width && i >= p.pos.1 && i < p.pos.1 + p.width {
                    self.board.set(j, i, p.get(j-p.pos.0, i-p.pos.1)); 
                 } else {
+                    // remove old moving block from the board
                     match self.board.get(j,i) {
                         grid::GridCell::MOVING => {
                             self.board.set(j,i,grid::GridCell::EMPTY);
@@ -72,8 +74,28 @@ impl Game {
         let mv =
             rl.is_key_pressed(KeyboardKey::KEY_L) as isize - 
             rl.is_key_pressed(KeyboardKey::KEY_H) as isize;
+        
+        if mv == 0 {
+            return;
+        }
 
-        p.pos.0 += mv;
+        let mut able = true;
+        // check for left or right collision
+        for i in 0..p.width {
+            if !able { break; }
+            for j in 0..p.width {
+                if let grid::GridCell::MOVING = p.get(j,i) {
+                    if let grid::GridCell::WALL | grid::GridCell::BLOCK = self.board.get(p.pos.0 + mv + j,i) {
+                        able = false;
+                        break;
+                    }
+                }
+            }
+        }
+
+        if able {
+            p.pos.0 += mv;
+        }
     }
 
     fn handle_rotate(&mut self, rl: &mut RaylibHandle) {

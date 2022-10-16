@@ -41,11 +41,33 @@ impl Game {
             self.handle_rotate(&mut rl);
             self.set_board();
 
+            if rl.is_key_pressed(KeyboardKey::KEY_SPACE) {
+                self.move_down();
+            }
+
             let mut d = rl.begin_drawing(&thread);
 
             d.clear_background(Color::RAYWHITE);
             d.draw_text("TETRIS", 10,10, 10, Color::GRAY);
             self.draw_board(&mut d);
+        }
+    }
+    
+    fn move_down(&mut self) {
+        self.play_piece.as_mut().unwrap().pos.1 += 1;
+        if self.check_colision() {
+            // can't move down so it is the end of this round 
+            self.play_piece.as_mut().unwrap().pos.1 -= 1;
+            // change all moving to block
+            let p: & piece::Pieces = self.play_piece.as_ref().unwrap();
+            for i in 0..p.width {
+                for j in 0..p.width {
+                    if let grid::GridCell::MOVING = p.get(j,i) {
+                        self.board.set(p.pos.0+j, p.pos.1+i, grid::GridCell::BLOCK);
+                    }
+                }
+            }
+            self.play_piece = None;
         }
     }
 
@@ -70,54 +92,56 @@ impl Game {
     }
     
     fn handle_slide(&mut self, rl:&mut RaylibHandle) {
-        let p: &mut piece::Pieces = self.play_piece.as_mut().unwrap();
         let mv =
             rl.is_key_pressed(KeyboardKey::KEY_L) as isize - 
             rl.is_key_pressed(KeyboardKey::KEY_H) as isize;
-        
-        if mv == 0 {
-            return;
-        }
 
-        let mut able = true;
+        if mv == 0 { return; }
+
         // check for left or right collision
+        self.play_piece.as_mut().unwrap().pos.0 += mv;
+
+        if self.check_colision() {
+            self.play_piece.as_mut().unwrap().pos.0 -= mv;
+        }
+    }
+
+    fn check_colision(& self) -> bool {
+        let p: & piece::Pieces = self.play_piece.as_ref().unwrap();
         for i in 0..p.width {
-            if !able { break; }
             for j in 0..p.width {
                 if let grid::GridCell::MOVING = p.get(j,i) {
-                    if let grid::GridCell::WALL | grid::GridCell::BLOCK = self.board.get(p.pos.0 + mv + j,i) {
-                        able = false;
-                        break;
+                    if let grid::GridCell::WALL | grid::GridCell::BLOCK =
+                        self.board.get(j+p.pos.0,i+p.pos.1) {
+                        return true;
                     }
                 }
             }
         }
-
-        if able {
-            p.pos.0 += mv;
-        }
+        return false;
     }
 
     fn handle_rotate(&mut self, rl: &mut RaylibHandle) {
-        if rl.is_key_pressed(KeyboardKey::KEY_A) {
-            self.play_piece.as_mut().unwrap().rotate(1);
-        }
-        if rl.is_key_pressed(KeyboardKey::KEY_D) {
-            self.play_piece.as_mut().unwrap().rotate(-1);
+        let mut a = 0;
+        if rl.is_key_pressed(KeyboardKey::KEY_A) { a = 1; }
+        if rl.is_key_pressed(KeyboardKey::KEY_D) { a = -1; }
+        self.play_piece.as_mut().unwrap().rotate(a);
+        if self.check_colision() {
+            self.play_piece.as_mut().unwrap().rotate(-a);
         }
     }
 
     fn draw_board(&self, d:&mut RaylibDrawHandle) {
-        const size:i32= 20;
-        const start:(i32,i32) = (10,30);
+        const SIZE:i32= 20;
+        const START:(i32,i32) = (10,30);
 
         // verticle line
         for i in 2..grid::BOARD_WIDTH-1 {
             d.draw_line( 
-                size*i as i32 +start.0,
-                start.1,
-                size*i as i32 +start.0,
-                grid::BOARD_HEIGHT as i32 *size +start.1,
+                SIZE*i as i32 +START.0,
+                START.1,
+                SIZE*i as i32 +START.0,
+                grid::BOARD_HEIGHT as i32 *SIZE +START.1,
                 Color::GRAY
                 );
         }
@@ -125,10 +149,10 @@ impl Game {
         // horizontal line
         for i in 1..grid::BOARD_HEIGHT-1 {
             d.draw_line( 
-                start.0,
-                size*i as i32 +start.1,
-                grid::BOARD_WIDTH as i32 * size +start.0,
-                size*i as i32 +start.1,
+                START.0,
+                SIZE*i as i32 +START.1,
+                grid::BOARD_WIDTH as i32 * SIZE +START.0,
+                SIZE*i as i32 +START.1,
                 Color::GRAY
                 );
         }
@@ -141,9 +165,9 @@ impl Game {
                    },
                    _ => {
                        d.draw_rectangle(
-                           start.0 + j as i32 * size,
-                           start.1 + i as i32 * size,
-                           size, size,
+                           START.0 + j as i32 * SIZE,
+                           START.1 + i as i32 * SIZE,
+                           SIZE, SIZE,
                            Color::GRAY
                            );
                    },

@@ -12,38 +12,38 @@ impl PieceType {
     pub fn value(&self) -> &[GridCell] {
         match *self {
             PieceType::T => &[
-                GridCell::BLOCK, GridCell::BLOCK, GridCell::BLOCK,
-                GridCell::EMPTY, GridCell::BLOCK, GridCell::EMPTY,
+                GridCell::MOVING, GridCell::MOVING, GridCell::MOVING,
+                GridCell::EMPTY, GridCell::MOVING, GridCell::EMPTY,
                 GridCell::EMPTY, GridCell::EMPTY, GridCell::EMPTY,
             ],
             PieceType::O => &[
-                GridCell::BLOCK, GridCell::BLOCK,
-                GridCell::BLOCK, GridCell::BLOCK,
+                GridCell::MOVING, GridCell::MOVING,
+                GridCell::MOVING, GridCell::MOVING,
             ],
             PieceType::L => &[
-                GridCell::BLOCK, GridCell::EMPTY, GridCell::EMPTY,
-                GridCell::BLOCK, GridCell::EMPTY, GridCell::EMPTY,
-                GridCell::BLOCK, GridCell::BLOCK, GridCell::EMPTY,
+                GridCell::MOVING, GridCell::EMPTY, GridCell::EMPTY,
+                GridCell::MOVING, GridCell::EMPTY, GridCell::EMPTY,
+                GridCell::MOVING, GridCell::MOVING, GridCell::EMPTY,
             ],
             PieceType::J => &[
-                GridCell::EMPTY, GridCell::EMPTY, GridCell::BLOCK,
-                GridCell::EMPTY, GridCell::EMPTY, GridCell::BLOCK,
-                GridCell::EMPTY, GridCell::BLOCK, GridCell::BLOCK,
+                GridCell::EMPTY, GridCell::EMPTY, GridCell::MOVING,
+                GridCell::EMPTY, GridCell::EMPTY, GridCell::MOVING,
+                GridCell::EMPTY, GridCell::MOVING, GridCell::MOVING,
             ],
             PieceType::I => &[
-                GridCell::EMPTY, GridCell::BLOCK, GridCell::EMPTY, GridCell::EMPTY,
-                GridCell::EMPTY, GridCell::BLOCK, GridCell::EMPTY, GridCell::EMPTY,
-                GridCell::EMPTY, GridCell::BLOCK, GridCell::EMPTY, GridCell::EMPTY,
-                GridCell::EMPTY, GridCell::BLOCK, GridCell::EMPTY, GridCell::EMPTY,
+                GridCell::EMPTY, GridCell::MOVING, GridCell::EMPTY, GridCell::EMPTY,
+                GridCell::EMPTY, GridCell::MOVING, GridCell::EMPTY, GridCell::EMPTY,
+                GridCell::EMPTY, GridCell::MOVING, GridCell::EMPTY, GridCell::EMPTY,
+                GridCell::EMPTY, GridCell::MOVING, GridCell::EMPTY, GridCell::EMPTY,
             ],
             PieceType::S => &[
-                GridCell::EMPTY, GridCell::BLOCK, GridCell::BLOCK,
-                GridCell::BLOCK, GridCell::BLOCK, GridCell::EMPTY,
+                GridCell::EMPTY, GridCell::MOVING, GridCell::MOVING,
+                GridCell::MOVING, GridCell::MOVING, GridCell::EMPTY,
                 GridCell::EMPTY, GridCell::EMPTY, GridCell::EMPTY,
             ],
             PieceType::Z => &[
-                GridCell::BLOCK, GridCell::BLOCK, GridCell::EMPTY,
-                GridCell::EMPTY, GridCell::BLOCK, GridCell::BLOCK,
+                GridCell::MOVING, GridCell::MOVING, GridCell::EMPTY,
+                GridCell::EMPTY, GridCell::MOVING, GridCell::MOVING,
                 GridCell::EMPTY, GridCell::EMPTY, GridCell::EMPTY,
             ],
         }
@@ -53,7 +53,8 @@ impl PieceType {
 pub struct Pieces {
     shape : PieceType,
     pub rotation : i8,
-    width: usize,
+    pub width: isize,
+    pub pos: (isize, isize),
 }
 
 impl Pieces {
@@ -67,40 +68,28 @@ impl Pieces {
                     PieceType::I => 4,
                 },
             shape : t,
+            pos : (0, 0),
         }
     }
     
-    pub fn print_debug(&self) {
-        println!("type {} -- ratation {}", 
-                 match self.shape {
-                     PieceType::T => "T",
-                     PieceType::O => "O",
-                     PieceType::L => "L",
-                     PieceType::J => "J",
-                     PieceType::I => "I",
-                     PieceType::S => "S",
-                     PieceType::Z => "Z",
-                 }, self.rotation);
-        for i in 0..self.width {
-            for j in 0..self.width {
-                print!("{}", match self.get(j,i) {
-                    GridCell::EMPTY => 0,
-                    _ => 1,
-                });
-            }
-            println!("");
-        }
-    }
-
-    pub fn get(&self, x:usize, y:usize) -> GridCell{
+    pub fn get(&self, x:isize, y:isize) -> GridCell{
         self.shape.value()[
             match self.rotation {
                 1 => self.width*(self.width -1) - self.width*x + y, // 90
                 2 => (self.width*self.width-1) - self.width*y - x, // 180
                 3 => self.width*x + self.width - y -1, // 270
                 0 | _ => y * self.width + x
-            }
+            } as usize
         ]
+    }
+    
+    pub fn rand() -> Self {
+        Self::make( rand::random() )
+    }
+
+    pub fn rotate(&mut self, dir:i8) {
+       self.rotation += 4 + dir;
+       self.rotation %= 4;
     }
 }
 

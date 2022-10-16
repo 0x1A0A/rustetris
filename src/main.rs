@@ -1,6 +1,6 @@
 mod game;
 
 fn main() {
-    let tetris = game::init_game();
+    let mut tetris = game::init_game();
     tetris.run();
 }

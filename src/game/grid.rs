@@ -1,26 +1,27 @@
-pub const BOARD_WIDTH : usize = 12;
-pub const BOARD_HEIGHT : usize = 21; 
+pub const BOARD_WIDTH : isize = 12;
+pub const BOARD_HEIGHT : isize = 21; 
 
 #[derive(Copy, Clone)]
 pub enum GridCell {
     EMPTY,
     WALL,
     BLOCK,
+    MOVING,
 }
 
 pub struct Grid {
-    data : [GridCell; BOARD_WIDTH*BOARD_HEIGHT ],
+    data : [GridCell; (BOARD_WIDTH*BOARD_HEIGHT) as usize],
 }
 
 pub fn build_grid() -> Grid {
     let mut g = Grid {
-        data: [ GridCell::EMPTY; BOARD_WIDTH*BOARD_HEIGHT ], 
+        data: [ GridCell::EMPTY; (BOARD_WIDTH*BOARD_HEIGHT) as usize ], 
     };
 
     for i in 0..21 {
         for j in 0..12 {
             if i == 20 || j == 0 || j == 11 {
-                g.data[i*BOARD_WIDTH + j] = GridCell::WALL;
+                g.data[(i*BOARD_WIDTH + j) as usize] = GridCell::WALL;
             }
         }
     }
@@ -29,18 +30,12 @@ pub fn build_grid() -> Grid {
 }
 
 impl Grid {
-    pub fn get(&self, x:usize, y:usize) -> &GridCell {
-        return &self.data[ y*BOARD_WIDTH + x];
+    pub fn get(&self, x:isize, y:isize) -> &GridCell {
+        return &self.data[ (y*BOARD_WIDTH + x) as usize];
     }
-    pub fn print_debug(&self) {
-        for i in 0..21 {
-            for j in 0..12 {
-                print!("{}", match self.get(j,i) {
-                    GridCell::EMPTY => 0,
-                    _ => 1,
-                });
-            } println!("");
-        }
+
+    pub fn set(&mut self, x:isize, y:isize, v:GridCell) {
+        self.data[ (y*BOARD_WIDTH + x) as usize] = v;
     }
 }
 

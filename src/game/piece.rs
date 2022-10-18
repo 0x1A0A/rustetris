@@ -67,11 +67,11 @@ impl Pieces {
                     PieceType::O => 2,
                     PieceType::I => 4,
                 },
-            shape : t,
-            pos : (0, 0),
+                shape : t,
+                pos : (0, 0),
         }
     }
-    
+
     pub fn get(&self, x:isize, y:isize) -> GridCell{
         self.shape.value()[
             match self.rotation {
@@ -82,15 +82,19 @@ impl Pieces {
             } as usize
         ]
     }
-    
-    pub fn rand() -> Self {
-        Self::make( rand::random() )
-    }
+
+    pub fn rand() -> Self { Self::make( rand::random() ) }
 
     pub fn rotate(&mut self, dir:i8) {
-       self.rotation += 4 + dir;
-       self.rotation %= 4;
+        self.rotation += 4 + dir;
+        self.rotation %= 4;
     }
+
+    pub fn slide(&mut self, dir:isize) { self.pos.0 += dir; }
+
+    pub fn drop(&mut self) { self.pos.1 += 1; }
+
+    pub fn raise(&mut self) { self.pos.1 += -1; }
 }
 
 impl Distribution<PieceType> for Standard {

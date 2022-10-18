@@ -37,5 +37,14 @@ impl Grid {
     pub fn set(&mut self, x:isize, y:isize, v:GridCell) {
         self.data[ (y*BOARD_WIDTH + x) as usize] = v;
     }
+
+    pub fn is_row_full(&self, row:isize) -> bool {
+        for j in 1..BOARD_WIDTH-1 {
+            if let GridCell::EMPTY = self.get(j, row) {
+                return false;
+            }
+        }
+        return true;
+    }
 }
 

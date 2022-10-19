@@ -59,16 +59,18 @@ pub struct Pieces {
 
 impl Pieces {
     pub fn make( t : PieceType ) -> Self {
+        let w = match &t {
+            PieceType::T | PieceType::L | PieceType::J | PieceType::S | PieceType::Z => 3,
+            PieceType::O => 2,
+            PieceType::I => 4,
+        };
+        let x = rand::thread_rng()
+            .gen_range(2..(super::grid::BOARD_WIDTH - w -1) );
         Self {
             rotation : rand::thread_rng().gen_range(0..=3),
-            width:
-                match &t {
-                    PieceType::T | PieceType::L | PieceType::J | PieceType::S | PieceType::Z => 3,
-                    PieceType::O => 2,
-                    PieceType::I => 4,
-                },
-                shape : t,
-                pos : (0, 0),
+            width: w,
+            shape : t,
+            pos : (x, -w),
         }
     }
 

@@ -46,5 +46,13 @@ impl Grid {
         }
         return true;
     }
+
+    pub fn reset(&mut self) {
+        for i in 0..BOARD_HEIGHT-1 {
+            for j in 1..BOARD_WIDTH-1 {
+                self.set(j,i, GridCell::EMPTY);
+            }
+        }
+    }
 }
 

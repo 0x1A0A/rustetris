@@ -1,5 +1,4 @@
 use raylib::prelude::*;
-use rand::Rng;
 
 pub mod grid;
 pub mod piece;
@@ -33,11 +32,20 @@ impl Game {
             match &self.play_piece {
                 None => {
                     self.play_piece = Some(piece::Pieces::rand());
-                    self.play_piece
-                        .as_mut()
-                        .unwrap()
-                        .pos.0 = rand::thread_rng()
-                        .gen_range(2..(grid::BOARD_WIDTH - self.play_piece.as_ref().unwrap().width -1) );
+                    // spawn piece
+                    while self.is_out_of_bound() {
+                        self.play_piece.as_mut().unwrap().drop();
+                        if self.check_collision() {
+                            break;
+                        }
+                    }
+
+                    if self.is_out_of_bound() { 
+                        println!("DEAD");
+                        self.board.reset();
+                        self.play_piece = None;
+                        continue;
+                    }
                 },
                 Some(_) => {
                 },
@@ -73,7 +81,7 @@ impl Game {
     fn move_down(&mut self) {
         self.play_piece.as_mut().unwrap().drop();
 
-        if self.check_colision() {
+        if self.check_collision() {
             let p: &mut piece::Pieces = self.play_piece.as_mut().unwrap();
             // can't move down so it is the end of this round 
             p.raise();
@@ -85,15 +93,13 @@ impl Game {
                     }
                 }
             }
+
             self.play_piece = None;
             let mut complete = 0;
             // completion checking
             let mut i: isize = grid::BOARD_HEIGHT-2;
             while i >= 0 {
-
-                let del = self.board.is_row_full(i);
-
-                if del {
+                if self.board.is_row_full(i) {
                     complete+=1;
                     for k in (0..=i).rev() {
                         for j in 1..grid::BOARD_WIDTH-1 {
@@ -107,7 +113,6 @@ impl Game {
                     }
                     i+=1;
                 }
-
                 i-=1;
             }
 
@@ -157,15 +162,16 @@ impl Game {
         // check for left or right collision
         self.play_piece.as_mut().unwrap().slide(mv);
 
-        if self.check_colision() {
+        if self.check_collision() {
             self.play_piece.as_mut().unwrap().slide(-mv);
         }
     }
 
-    fn check_colision(& self) -> bool {
+    fn check_collision(& self) -> bool {
         let p: & piece::Pieces = self.play_piece.as_ref().unwrap();
         for i in 0..p.width {
             for j in 0..p.width {
+                if i + p.pos.1 < 0 { continue; }
                 if let grid::GridCell::MOVING = p.get(j,i) {
                     if let grid::GridCell::WALL | grid::GridCell::BLOCK =
                         self.board.get(j+p.pos.0,i+p.pos.1) {
@@ -177,12 +183,26 @@ impl Game {
         return false;
     }
 
+    fn is_out_of_bound(&self) -> bool {
+        let p: & piece::Pieces = self.play_piece.as_ref().unwrap();
+        for i in 0..p.width {
+            for j in 0..p.width {
+                if let grid::GridCell::MOVING = p.get(j,i) {
+                    if p.pos.1 + i < 0 {
+                        return true;  
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
     fn handle_rotate(&mut self, rl: &mut RaylibHandle) {
         let mut a = 0;
         if rl.is_key_pressed(KeyboardKey::KEY_A) { a = 1; }
         if rl.is_key_pressed(KeyboardKey::KEY_D) { a = -1; }
         self.play_piece.as_mut().unwrap().rotate(a);
-        if self.check_colision() {
+        if self.check_collision() {
             self.play_piece.as_mut().unwrap().rotate(-a);
         }
     }
